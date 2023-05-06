@@ -99,6 +99,10 @@ interface ExtensionFormattingOptions {
 
 type PackageManagers = "npm" | "yarn" | "pnpm";
 
+type ExecuteNpmPackageManagerCommand = (
+  workspaceFolderUri: string | undefined
+) => Promise<PackageManagers | undefined>;
+
 export {
   ModuleResolverInterface,
   PrettierResolveConfigOptions,
@@ -107,4 +111,5 @@ export {
   PackageManagers,
   PrettierOptions,
   PrettierVSCodeConfig,
+  ExecuteNpmPackageManagerCommand,
 };

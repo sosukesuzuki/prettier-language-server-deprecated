@@ -21,10 +21,10 @@ import type {
   PrettierOptions,
   PrettierResolveConfigOptions,
   PrettierVSCodeConfig,
+  ExecuteNpmPackageManagerCommand,
 } from "./types";
 import { Files, type WorkspaceFolder } from "vscode-languageserver/node";
 import { URI } from "vscode-uri";
-import { commands } from "vscode";
 import { getConfig, getWorkspaceRelativePath } from "./util";
 
 const minPrettierVersion = "1.13.0";
@@ -76,7 +76,8 @@ export class ModuleResolver implements ModuleResolverInterface {
   constructor(
     private loggingService: LoggingService,
     private workspaceFolders: WorkspaceFolder[] | null | undefined,
-    private getIsTrusted: () => boolean
+    private getIsTrusted: () => boolean,
+    private executeNpmPackageManagerCommand: ExecuteNpmPackageManagerCommand
   ) {
     this.findPkgCache = new Map();
   }
@@ -143,11 +144,11 @@ export class ModuleResolver implements ModuleResolverInterface {
         });
         if (folder) workspaceFolder = folder.uri;
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const packageManager = (await commands.executeCommand<
-        "npm" | "pnpm" | "yarn"
-      >("npm.packageManager", workspaceFolder))!;
-      const resolvedGlobalPackageManagerPath = globalPathGet(packageManager);
+      const packageManager = await this.executeNpmPackageManagerCommand(
+        workspaceFolder
+      );
+      const resolvedGlobalPackageManagerPath =
+        packageManager && globalPathGet(packageManager);
       if (resolvedGlobalPackageManagerPath) {
         const globalModulePath = path.join(
           resolvedGlobalPackageManagerPath,

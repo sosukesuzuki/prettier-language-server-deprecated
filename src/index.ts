@@ -8,6 +8,7 @@ import {
   TextEdit,
   createConnection,
 } from "vscode-languageserver/node";
+import type { ExecuteNpmPackageManagerCommand, PackageManagers } from "./types";
 
 export function createPrettierLanguageServer() {
   const connection = createConnection(ProposedFeatures.all);
@@ -18,6 +19,19 @@ export function createPrettierLanguageServer() {
 
   let isTrusted = false;
   const getIsTrusted = () => isTrusted;
+
+  const executeNpmPackageManagerCommand: ExecuteNpmPackageManagerCommand =
+    async (workspaceFolderUri) => {
+      try {
+        const result = await connection.sendRequest(
+          "custom/executeNpmPackageCommand",
+          { workspaceFolderUri }
+        );
+        return result as PackageManagers;
+      } catch {
+        return undefined;
+      }
+    };
 
   connection.onInitialize(() => {
     const result: InitializeResult = {
