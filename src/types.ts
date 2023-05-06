@@ -97,9 +97,14 @@ interface ExtensionFormattingOptions {
   force: boolean;
 }
 
+type PackageManagers = "npm" | "yarn" | "pnpm";
+
 export {
   ModuleResolverInterface,
   PrettierResolveConfigOptions,
   RangeFormattingOptions,
   ExtensionFormattingOptions,
+  PackageManagers,
+  PrettierOptions,
+  PrettierVSCodeConfig,
 };
