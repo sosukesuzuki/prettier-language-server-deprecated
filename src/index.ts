@@ -7,7 +7,7 @@ import {
   TextDocuments,
   TextEdit,
   createConnection,
-} from "vscode-languageserver/node.js";
+} from "vscode-languageserver/node";
 
 export function createPrettierLanguageServer() {
   const connection = createConnection(ProposedFeatures.all);

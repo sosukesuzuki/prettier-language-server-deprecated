@@ -2,7 +2,7 @@
   "name": "prettier-language-server",
   "version": "1.0.0",
   "license": "MIT",
-  "type": "module",
+  "type": "commonjs",
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
