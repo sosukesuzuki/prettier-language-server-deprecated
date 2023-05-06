@@ -23,7 +23,8 @@
     "find-up": "^6.3.0",
     "resolve": "^1.22.2",
     "vscode-languageserver": "^8.1.0",
-    "vscode-languageserver-textdocument": "^1.0.8"
+    "vscode-languageserver-textdocument": "^1.0.8",
+    "vscode-uri": "^3.0.7"
   },
   "devDependencies": {
     "@types/node": "^20.1.0",

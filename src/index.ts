@@ -16,6 +16,9 @@ export function createPrettierLanguageServer() {
     TextDocument
   );
 
+  let isTrusted = false;
+  const getIsTrusted = () => isTrusted;
+
   connection.onInitialize(() => {
     const result: InitializeResult = {
       capabilities: {
@@ -26,6 +29,13 @@ export function createPrettierLanguageServer() {
     };
     return result;
   });
+
+  connection.onNotification(
+    "workspace/didChangeTrust",
+    (params: { isTrusted: boolean }) => {
+      isTrusted = params.isTrusted;
+    }
+  );
 
   connection.onDocumentFormatting(async (params) => {
     const document = documents.get(params.textDocument.uri);

@@ -5,8 +5,7 @@ import * as path from "node:path";
 import * as prettier from "prettier";
 import * as resolve from "resolve";
 import * as semver from "semver";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { resolveGlobalNodePath, resolveGlobalYarnPath } from "./Files";
+import type { TextDocument } from "vscode-languageserver-textdocument";
 import type { LoggingService } from "./LoggingService";
 import {
   FAILED_TO_LOAD_MODULE_MESSAGE,
@@ -23,7 +22,9 @@ import type {
   PrettierResolveConfigOptions,
   PrettierVSCodeConfig,
 } from "./types";
-import { commands, Uri, workspace } from "vscode";
+import { Files, type WorkspaceFolder } from "vscode-languageserver/node";
+import { URI } from "vscode-uri";
+import { commands } from "vscode";
 import { getConfig, getWorkspaceRelativePath } from "./util";
 
 const minPrettierVersion = "1.13.0";
@@ -38,7 +39,7 @@ const globalPaths: {
   npm: {
     cache: undefined,
     get(): string | undefined {
-      return resolveGlobalNodePath();
+      return Files.resolveGlobalNodePath();
     },
   },
   pnpm: {
@@ -51,7 +52,7 @@ const globalPaths: {
   yarn: {
     cache: undefined,
     get(): string | undefined {
-      return resolveGlobalYarnPath();
+      return Files.resolveGlobalYarnPath();
     },
   },
 };
@@ -72,7 +73,11 @@ export class ModuleResolver implements ModuleResolverInterface {
   private ignorePathCache = new Map<string, string>();
   private path2Module = new Map<string, PrettierNodeModule>();
 
-  constructor(private loggingService: LoggingService) {
+  constructor(
+    private loggingService: LoggingService,
+    private workspaceFolders: WorkspaceFolder[] | null | undefined,
+    private getIsTrusted: () => boolean
+  ) {
     this.findPkgCache = new Map();
   }
 
@@ -87,13 +92,13 @@ export class ModuleResolver implements ModuleResolverInterface {
   public async getPrettierInstance(
     fileName: string
   ): Promise<PrettierNodeModule | undefined> {
-    if (!workspace.isTrusted) {
+    if (!this.getIsTrusted()) {
       this.loggingService.logDebug(UNTRUSTED_WORKSPACE_USING_BUNDLED_PRETTIER);
       return prettier;
     }
 
     const { prettierPath, resolveGlobalModules } = getConfig(
-      Uri.file(fileName)
+      URI.file(fileName)
     );
 
     // Look for local module
@@ -130,10 +135,15 @@ export class ModuleResolver implements ModuleResolverInterface {
     // If global modules allowed, look for global module
     if (resolveGlobalModules && !modulePath) {
       let workspaceFolder;
-      if (workspace.workspaceFolders) {
-        const folder = workspace.getWorkspaceFolder(Uri.file(fileName));
+      if (this.workspaceFolders) {
+        // Alternative of workspace.getWorkspaceFolder
+        const folder = this.workspaceFolders.find((workspaceFolder) => {
+          const fileUri = URI.file(fileName);
+          return fileUri.toString() === workspaceFolder.uri;
+        });
         if (folder) workspaceFolder = folder.uri;
       }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const packageManager = (await commands.executeCommand<
         "npm" | "pnpm" | "yarn"
       >("npm.packageManager", workspaceFolder))!;
@@ -223,10 +233,10 @@ export class ModuleResolver implements ModuleResolverInterface {
       resolvedIgnorePath = getWorkspaceRelativePath(fileName, ignorePath);
       // if multiple different workspace folders contain this same file, we
       // may have chosen one that doesn't actually contain .prettierignore
-      if (workspace.workspaceFolders) {
+      if (this.workspaceFolders) {
         // all workspace folders that contain the file
-        const folders = workspace.workspaceFolders
-          .map((folder) => folder.uri.fsPath)
+        const folders = this.workspaceFolders
+          .map((folder) => URI.parse(folder.uri).fsPath)
           .filter((folder) => {
             // https://stackoverflow.com/a/45242825
             const relative = path.relative(folder, fileName);
@@ -260,10 +270,13 @@ export class ModuleResolver implements ModuleResolverInterface {
   }
 
   public async getResolvedConfig(
-    { fileName, uri }: TextDocument,
+    textDocument: TextDocument,
     vscodeConfig: PrettierVSCodeConfig
   ): Promise<"error" | "disabled" | PrettierOptions | null> {
+    const uri = URI.parse(textDocument.uri);
     const isVirtual = uri.scheme !== "file" && uri.scheme !== "vscode-userdata";
+
+    const fileName = uri.fsPath;
 
     let configPath: string | undefined;
     try {
