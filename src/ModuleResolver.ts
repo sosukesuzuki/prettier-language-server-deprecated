@@ -427,7 +427,7 @@ export class ModuleResolver implements ModuleResolverInterface {
     }
 
     // First look for an explicit package.json dep
-    const packageJsonResDir = findUp.sync(
+    const packageJsonResDir = findUp.findUpSync(
       (dir) => {
         if (fs.existsSync(path.join(dir, "package.json"))) {
           let packageJson;
@@ -450,7 +450,7 @@ export class ModuleResolver implements ModuleResolverInterface {
         }
 
         if (this.isInternalTestRoot(dir)) {
-          return findUp.stop;
+          return findUp.findUpStop;
         }
       },
       { cwd: finalPath, type: "directory" }
@@ -463,14 +463,14 @@ export class ModuleResolver implements ModuleResolverInterface {
     }
 
     // If no explicit package.json dep found, instead look for implicit dep
-    const nodeModulesResDir = findUp.sync(
+    const nodeModulesResDir = findUp.findUpSync(
       (dir) => {
         if (fs.existsSync(path.join(dir, "node_modules", pkgName))) {
           return dir;
         }
 
         if (this.isInternalTestRoot(dir)) {
-          return findUp.stop;
+          return findUp.findUpStop;
         }
       },
       { cwd: finalPath, type: "directory" }
