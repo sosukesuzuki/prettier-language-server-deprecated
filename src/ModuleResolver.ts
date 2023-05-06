@@ -6,7 +6,6 @@ import * as prettier from "prettier";
 import * as resolve from "resolve";
 import * as semver from "semver";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { commands, Uri, workspace } from "vscode";
 import { resolveGlobalNodePath, resolveGlobalYarnPath } from "./Files";
 import type { LoggingService } from "./LoggingService";
 import {
@@ -24,6 +23,7 @@ import type {
   PrettierResolveConfigOptions,
   PrettierVSCodeConfig,
 } from "./types";
+import { commands, Uri, workspace } from "vscode";
 import { getConfig, getWorkspaceRelativePath } from "./util";
 
 const minPrettierVersion = "1.13.0";
