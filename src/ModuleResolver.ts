@@ -8,7 +8,7 @@ import * as semver from "semver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { commands, Uri, workspace } from "vscode";
 import { resolveGlobalNodePath, resolveGlobalYarnPath } from "./Files";
-import { LoggingService } from "./LoggingService";
+import type { LoggingService } from "./LoggingService";
 import {
   FAILED_TO_LOAD_MODULE_MESSAGE,
   INVALID_PRETTIER_CONFIG,
@@ -17,7 +17,7 @@ import {
   UNTRUSTED_WORKSPACE_USING_BUNDLED_PRETTIER,
   USING_BUNDLED_PRETTIER,
 } from "./message";
-import {
+import type {
   ModuleResolverInterface,
   PackageManagers,
   PrettierOptions,
