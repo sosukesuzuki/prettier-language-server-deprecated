@@ -25,7 +25,11 @@ import type {
 } from "./types";
 import { Files, type WorkspaceFolder } from "vscode-languageserver/node";
 import { URI } from "vscode-uri";
-import { getConfig, getWorkspaceRelativePath } from "./util";
+import {
+  getConfig,
+  getWorkspaceRelativePath,
+  getWorkspaceFolder,
+} from "./util";
 
 const minPrettierVersion = "1.13.0";
 declare const __webpack_require__: typeof require;
@@ -107,7 +111,11 @@ export class ModuleResolver implements ModuleResolverInterface {
 
     try {
       modulePath = prettierPath
-        ? getWorkspaceRelativePath(fileName, prettierPath)
+        ? getWorkspaceRelativePath(
+            fileName,
+            prettierPath,
+            this.workspaceFolders || []
+          )
         : this.findPkg(fileName, "prettier");
     } catch (error) {
       let moduleDirectory = "";
@@ -135,13 +143,9 @@ export class ModuleResolver implements ModuleResolverInterface {
 
     // If global modules allowed, look for global module
     if (resolveGlobalModules && !modulePath) {
-      let workspaceFolder;
+      let workspaceFolder: string | undefined;
       if (this.workspaceFolders) {
-        // Alternative of workspace.getWorkspaceFolder
-        const folder = this.workspaceFolders.find((workspaceFolder) => {
-          const fileUri = URI.file(fileName);
-          return fileUri.toString() === workspaceFolder.uri;
-        });
+        const folder = getWorkspaceFolder(this.workspaceFolders, fileName);
         if (folder) workspaceFolder = folder.uri;
       }
       const packageManager = await this.executeNpmPackageManagerCommand(
@@ -231,7 +235,11 @@ export class ModuleResolver implements ModuleResolverInterface {
     // cache resolvedIgnorePath because resolving it checks the file system
     let resolvedIgnorePath = this.ignorePathCache.get(cacheKey);
     if (!resolvedIgnorePath) {
-      resolvedIgnorePath = getWorkspaceRelativePath(fileName, ignorePath);
+      resolvedIgnorePath = getWorkspaceRelativePath(
+        fileName,
+        ignorePath,
+        this.workspaceFolders
+      );
       // if multiple different workspace folders contain this same file, we
       // may have chosen one that doesn't actually contain .prettierignore
       if (this.workspaceFolders) {
@@ -297,7 +305,11 @@ export class ModuleResolver implements ModuleResolverInterface {
       config: isVirtual
         ? undefined
         : vscodeConfig.configPath
-        ? getWorkspaceRelativePath(fileName, vscodeConfig.configPath)
+        ? getWorkspaceRelativePath(
+            fileName,
+            vscodeConfig.configPath,
+            this.workspaceFolders
+          )
         : configPath,
       editorconfig: isVirtual ? undefined : vscodeConfig.useEditorConfig,
     };
