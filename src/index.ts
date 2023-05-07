@@ -1,77 +1,16 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
-  InitializeResult,
   ProposedFeatures,
-  Range,
-  TextDocumentSyncKind,
   TextDocuments,
-  TextEdit,
   createConnection,
 } from "vscode-languageserver/node";
-import type { ExecuteNpmPackageManagerCommand, PackageManagers } from "./types";
+import { ConnectionService } from "./ConnectionService";
 
 export function createPrettierLanguageServer() {
-  const connection = createConnection(ProposedFeatures.all);
-
-  const documents: TextDocuments<TextDocument> = new TextDocuments(
-    TextDocument
+  const connectionService = new ConnectionService(
+    createConnection(ProposedFeatures.all),
+    new TextDocuments(TextDocument)
   );
-
-  let isTrusted = false;
-  const getIsTrusted = () => isTrusted;
-
-  const executeNpmPackageManagerCommand: ExecuteNpmPackageManagerCommand =
-    async (workspaceFolderUri) => {
-      try {
-        const result = await connection.sendRequest(
-          "custom/executeNpmPackageCommand",
-          { workspaceFolderUri }
-        );
-        return result as PackageManagers;
-      } catch {
-        return undefined;
-      }
-    };
-
-  connection.onInitialize(() => {
-    const result: InitializeResult = {
-      capabilities: {
-        textDocumentSync: TextDocumentSyncKind.Incremental,
-        documentFormattingProvider: true,
-        documentRangeFormattingProvider: true,
-      },
-    };
-    return result;
-  });
-
-  connection.onNotification(
-    "workspace/didChangeTrust",
-    (params: { isTrusted: boolean }) => {
-      isTrusted = params.isTrusted;
-    }
-  );
-
-  connection.onDocumentFormatting(async (params) => {
-    const document = documents.get(params.textDocument.uri);
-    if (document === undefined) {
-      return [];
-    }
-    const text = document.getText();
-    const pos0 = document.positionAt(0);
-    const pos1 = document.positionAt(text.length);
-    return [TextEdit.replace(Range.create(pos0, pos1), text.toUpperCase())];
-  });
-
-  connection.onDocumentRangeFormatting(async (params) => {
-    const document = documents.get(params.textDocument.uri);
-    if (document === undefined) {
-      return [];
-    }
-    const text = document.getText(params.range);
-    return [TextEdit.replace(params.range, text.toUpperCase())];
-  });
-
-  documents.listen(connection);
-
-  connection.listen();
+  connectionService.registerHandlers();
+  connectionService.listen();
 }
