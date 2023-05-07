@@ -9,6 +9,10 @@ import {
 } from "vscode-languageserver/node";
 import type { ExecuteNpmPackageManagerCommand, PackageManagers } from "./types";
 
+/**
+ * Manage a connection with clients.
+ * E.g. register handlers, requests to clients, ...
+ */
 export class ConnectionService {
   private isTrustedWorkspace = false;
 
