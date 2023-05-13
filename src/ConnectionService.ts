@@ -49,7 +49,23 @@ export class ConnectionService {
     if (resultPromise) {
       return resultPromise;
     }
-    resultPromise = this.connection.workspace.getConfiguration();
+    resultPromise = this.connection.workspace
+      .getConfiguration()
+      .then((config) => {
+        if (this.isTrusted) {
+          return config;
+        }
+        return {
+          ...config,
+          prettierPath: undefined,
+          configPath: undefined,
+          ignorePath: ".prettierignore",
+          documentSelectors: [],
+          useEditorConfig: false,
+          withNodeModules: false,
+          resolveGlobalModules: false,
+        };
+      });
     this.document2Setting.set(uri.fsPath, resultPromise);
     return resultPromise;
   }
