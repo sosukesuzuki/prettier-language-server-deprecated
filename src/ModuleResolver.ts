@@ -25,11 +25,7 @@ import type {
 } from "./types";
 import { Files, type WorkspaceFolder } from "vscode-languageserver/node";
 import { URI } from "vscode-uri";
-import {
-  getConfig,
-  getWorkspaceRelativePath,
-  getWorkspaceFolder,
-} from "./util";
+import { getWorkspaceRelativePath, getWorkspaceFolder } from "./util";
 
 const minPrettierVersion = "1.13.0";
 declare const __webpack_require__: typeof require;
@@ -81,7 +77,8 @@ export class ModuleResolver implements ModuleResolverInterface {
     private loggingService: LoggingService,
     private workspaceFolders: WorkspaceFolder[] | null | undefined,
     private getIsTrusted: () => boolean,
-    private executeNpmPackageManagerCommand: ExecuteNpmPackageManagerCommand
+    private executeNpmPackageManagerCommand: ExecuteNpmPackageManagerCommand,
+    private getConfig: (uri: URI) => Promise<PrettierVSCodeConfig>
   ) {
     this.findPkgCache = new Map();
   }
@@ -102,7 +99,7 @@ export class ModuleResolver implements ModuleResolverInterface {
       return prettier;
     }
 
-    const { prettierPath, resolveGlobalModules } = getConfig(
+    const { prettierPath, resolveGlobalModules } = await this.getConfig(
       URI.file(fileName)
     );
 

@@ -8,7 +8,12 @@ import {
   TextDocuments,
   TextEdit,
 } from "vscode-languageserver/node";
-import type { ExecuteNpmPackageManagerCommand, PackageManagers } from "./types";
+import type {
+  ExecuteNpmPackageManagerCommand,
+  PackageManagers,
+  PrettierVSCodeConfig,
+} from "./types";
+import { URI } from "vscode-uri";
 
 /**
  * Manage a connection with clients.
@@ -17,6 +22,13 @@ import type { ExecuteNpmPackageManagerCommand, PackageManagers } from "./types";
 export class ConnectionService {
   public hasConfigurationCapability = false;
   private isTrustedWorkspace = false;
+  /**
+   * Cache for document uri to configuration
+   */
+  private document2Setting: Map<
+    /* uri */ string,
+    Promise<PrettierVSCodeConfig>
+  > = new Map();
 
   constructor(
     private connection: Connection,
@@ -30,6 +42,16 @@ export class ConnectionService {
 
   public get isTrusted() {
     return this.isTrustedWorkspace;
+  }
+
+  public getConfig(uri: URI): Promise<PrettierVSCodeConfig> {
+    let resultPromise = this.document2Setting.get(uri.fsPath);
+    if (resultPromise) {
+      return resultPromise;
+    }
+    resultPromise = this.connection.workspace.getConfiguration();
+    this.document2Setting.set(uri.fsPath, resultPromise);
+    return resultPromise;
   }
 
   /**
