@@ -1,6 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   Connection,
+  DidChangeConfigurationNotification,
   InitializeResult,
   Range,
   TextDocumentSyncKind,
@@ -14,6 +15,7 @@ import type { ExecuteNpmPackageManagerCommand, PackageManagers } from "./types";
  * E.g. register handlers, requests to clients, ...
  */
 export class ConnectionService {
+  public hasConfigurationCapability = false;
   private isTrustedWorkspace = false;
 
   constructor(
@@ -48,7 +50,11 @@ export class ConnectionService {
     };
 
   public registerHandlers() {
-    this.connection.onInitialize(() => {
+    this.connection.onInitialize(({ capabilities }) => {
+      this.hasConfigurationCapability = !!(
+        capabilities.workspace && !!capabilities.workspace.configuration
+      );
+
       const result: InitializeResult = {
         capabilities: {
           textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -57,6 +63,16 @@ export class ConnectionService {
         },
       };
       return result;
+    });
+
+    this.connection.onInitialized(() => {
+      if (this.hasConfigurationCapability) {
+        // Register for all configuration changes.
+        this.connection.client.register(
+          DidChangeConfigurationNotification.type,
+          undefined
+        );
+      }
     });
 
     this.connection.onNotification(
