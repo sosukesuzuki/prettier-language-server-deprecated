@@ -25,7 +25,10 @@ import type {
 } from "./types";
 import { Files, type WorkspaceFolder } from "vscode-languageserver/node";
 import { URI } from "vscode-uri";
-import { getWorkspaceRelativePath, getWorkspaceFolder } from "./util";
+import {
+  getWorkspaceRelativePath,
+  getWorkspaceFolder,
+} from "./workspace-utils";
 
 const minPrettierVersion = "1.13.0";
 declare const __webpack_require__: typeof require;
