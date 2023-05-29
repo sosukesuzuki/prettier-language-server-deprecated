@@ -133,7 +133,7 @@ export class PrettierEditService {
     }
   }
 
-  private async getPrettierOptions(
+  private getPrettierOptions(
     fileName: string,
     parser: PrettierBuiltInParserName,
     vsCodeConfig: PrettierOptions,
