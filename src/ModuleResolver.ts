@@ -21,7 +21,6 @@ import type {
   PrettierOptions,
   PrettierResolveConfigOptions,
   PrettierVSCodeConfig,
-  ExecuteNpmPackageManagerCommand,
 } from "./types";
 import { Files, type WorkspaceFolder } from "vscode-languageserver/node";
 import { URI } from "vscode-uri";
@@ -29,6 +28,7 @@ import {
   getWorkspaceRelativePath,
   getWorkspaceFolder,
 } from "./workspace-utils";
+import { ConnectionService } from "./ConnectionService";
 
 const minPrettierVersion = "1.13.0";
 declare const __webpack_require__: typeof require;
@@ -80,8 +80,8 @@ export class ModuleResolver implements ModuleResolverInterface {
     private loggingService: LoggingService,
     private workspaceFolders: WorkspaceFolder[] | null | undefined,
     private getIsTrusted: () => boolean,
-    private executeNpmPackageManagerCommand: ExecuteNpmPackageManagerCommand,
-    private getConfig: (uri: URI) => Promise<PrettierVSCodeConfig>
+    private executeNpmPackageManagerCommand: ConnectionService["executeNpmPackageManagerCommand"],
+    private getConfig: ConnectionService["getConfig"]
   ) {
     this.findPkgCache = new Map();
   }

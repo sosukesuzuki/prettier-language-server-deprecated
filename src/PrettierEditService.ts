@@ -15,7 +15,7 @@ import { Range, TextEdit } from "vscode-languageserver";
 
 export class PrettierEditService {
   constructor(
-    private connectionService: ConnectionService,
+    private getConfig: ConnectionService["getConfig"],
     private loggingService: LoggingService,
     private moduleResolver: ModuleResolverInterface
   ) {}
@@ -72,7 +72,7 @@ export class PrettierEditService {
 
     this.loggingService.logInfo(`Formatting ${uri}`);
 
-    const vscodeConfig = await this.connectionService.getConfig(uri);
+    const vscodeConfig = await this.getConfig(uri);
 
     const resolvedConfig = await this.moduleResolver.getResolvedConfig(
       document,

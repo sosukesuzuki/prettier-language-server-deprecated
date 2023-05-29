@@ -14,6 +14,7 @@ import type {
   PrettierVSCodeConfig,
 } from "./types";
 import { URI } from "vscode-uri";
+import { PrettierEditService } from "./PrettierEditService";
 
 /**
  * Manage a connection with clients.
