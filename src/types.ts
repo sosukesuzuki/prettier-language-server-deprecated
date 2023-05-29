@@ -112,4 +112,6 @@ export {
   PrettierOptions,
   PrettierVSCodeConfig,
   ExecuteNpmPackageManagerCommand,
+  PrettierFileInfoResult,
+  PrettierBuiltInParserName,
 };
