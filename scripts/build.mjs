@@ -9,7 +9,11 @@ const pkg = JSON.parse(
 const dependencies = Object.keys(pkg.dependencies ?? {});
 const peerDependencies = Object.keys(pkg.peerDependencies ?? {});
 
-const external = [...dependencies, ...peerDependencies];
+const esm = ["find-up"];
+
+const external = [...dependencies, ...peerDependencies].filter(
+  (dep) => !esm.includes(dep)
+);
 
 /** @type {import('esbuild').BuildOptions} */
 const options = {
