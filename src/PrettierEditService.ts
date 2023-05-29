@@ -5,6 +5,8 @@ import {
   ModuleResolverInterface,
   PrettierBuiltInParserName,
   PrettierFileInfoResult,
+  PrettierOptions,
+  RangeFormattingOptions,
 } from "./types";
 import { ConnectionService } from "./ConnectionService";
 import { URI } from "vscode-uri";
@@ -129,5 +131,74 @@ export class PrettierEditService {
 
       return text;
     }
+  }
+
+  private async getPrettierOptions(
+    fileName: string,
+    parser: PrettierBuiltInParserName,
+    vsCodeConfig: PrettierOptions,
+    configOptions: PrettierOptions | null,
+    extensionFormattingOptions: ExtensionFormattingOptions
+  ) {
+    const fallbackToVSCodeConfig = configOptions === null;
+
+    const vsOpts: PrettierOptions = {};
+    if (fallbackToVSCodeConfig) {
+      vsOpts.arrowParens = vsCodeConfig.arrowParens;
+      vsOpts.bracketSpacing = vsCodeConfig.bracketSpacing;
+      vsOpts.endOfLine = vsCodeConfig.endOfLine;
+      vsOpts.htmlWhitespaceSensitivity = vsCodeConfig.htmlWhitespaceSensitivity;
+      vsOpts.insertPragma = vsCodeConfig.insertPragma;
+      vsOpts.singleAttributePerLine = vsCodeConfig.singleAttributePerLine;
+      vsOpts.bracketSameLine = vsCodeConfig.bracketSameLine;
+      vsOpts.jsxBracketSameLine = vsCodeConfig.jsxBracketSameLine;
+      vsOpts.jsxSingleQuote = vsCodeConfig.jsxSingleQuote;
+      vsOpts.printWidth = vsCodeConfig.printWidth;
+      vsOpts.proseWrap = vsCodeConfig.proseWrap;
+      vsOpts.quoteProps = vsCodeConfig.quoteProps;
+      vsOpts.requirePragma = vsCodeConfig.requirePragma;
+      vsOpts.semi = vsCodeConfig.semi;
+      vsOpts.singleQuote = vsCodeConfig.singleQuote;
+      vsOpts.tabWidth = vsCodeConfig.tabWidth;
+      vsOpts.trailingComma = vsCodeConfig.trailingComma;
+      vsOpts.useTabs = vsCodeConfig.useTabs;
+      vsOpts.embeddedLanguageFormatting =
+        vsCodeConfig.embeddedLanguageFormatting;
+      vsOpts.vueIndentScriptAndStyle = vsCodeConfig.vueIndentScriptAndStyle;
+    }
+
+    this.loggingService.logInfo(
+      fallbackToVSCodeConfig
+        ? "No local configuration (i.e. .prettierrc or .editorconfig) detected, falling back to VS Code configuration"
+        : "Detected local configuration (i.e. .prettierrc or .editorconfig), VS Code configuration will not be used"
+    );
+
+    let rangeFormattingOptions: RangeFormattingOptions | undefined;
+    if (
+      extensionFormattingOptions.rangeEnd &&
+      extensionFormattingOptions.rangeStart
+    ) {
+      rangeFormattingOptions = {
+        rangeEnd: extensionFormattingOptions.rangeEnd,
+        rangeStart: extensionFormattingOptions.rangeStart,
+      };
+    }
+
+    const options: PrettierOptions = {
+      ...(fallbackToVSCodeConfig ? vsOpts : {}),
+      ...{
+        /* cspell: disable-next-line */
+        filepath: fileName,
+        parser: parser as PrettierBuiltInParserName,
+      },
+      ...(rangeFormattingOptions || {}),
+      ...(configOptions || {}),
+    };
+
+    if (extensionFormattingOptions.force && options.requirePragma === true) {
+      options.requirePragma = false;
+    }
+
+    return options;
   }
 }
