@@ -20,7 +20,7 @@ export class PrettierEditService {
     private moduleResolver: ModuleResolverInterface
   ) {}
 
-  private provideEdits = async (
+  public provideEdits = async (
     document: TextDocument,
     options: ExtensionFormattingOptions
   ): Promise<TextEdit[]> => {

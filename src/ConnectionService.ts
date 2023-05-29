@@ -3,10 +3,8 @@ import {
   Connection,
   DidChangeConfigurationNotification,
   InitializeResult,
-  Range,
   TextDocumentSyncKind,
   TextDocuments,
-  TextEdit,
 } from "vscode-languageserver/node";
 import type {
   ExecuteNpmPackageManagerCommand,
@@ -15,6 +13,8 @@ import type {
 } from "./types";
 import { URI } from "vscode-uri";
 import { PrettierEditService } from "./PrettierEditService";
+import { ConsoleLoggingService, LoggingService } from "./LoggingService";
+import { ModuleResolver } from "./ModuleResolver";
 
 /**
  * Manage a connection with clients.
@@ -31,10 +31,16 @@ export class ConnectionService {
     Promise<PrettierVSCodeConfig>
   > = new Map();
 
+  private prettierEditService: PrettierEditService | undefined = undefined;
+
+  private loggingService: LoggingService;
+
   constructor(
     private connection: Connection,
     private documents: TextDocuments<TextDocument>
-  ) {}
+  ) {
+    this.loggingService = new ConsoleLoggingService(this.connection);
+  }
 
   public listen() {
     this.documents.listen(this.connection);
@@ -89,9 +95,21 @@ export class ConnectionService {
     };
 
   public registerHandlers() {
-    this.connection.onInitialize(({ capabilities }) => {
+    this.connection.onInitialize(({ capabilities, workspaceFolders }) => {
       this.hasConfigurationCapability = !!(
         capabilities.workspace && !!capabilities.workspace.configuration
+      );
+
+      this.prettierEditService = new PrettierEditService(
+        this.getConfig,
+        this.loggingService,
+        new ModuleResolver(
+          this.loggingService,
+          workspaceFolders,
+          () => this.isTrusted,
+          this.executeNpmPackageManagerCommand,
+          this.getConfig
+        )
       );
 
       const result: InitializeResult = {
@@ -126,10 +144,13 @@ export class ConnectionService {
       if (document === undefined) {
         return [];
       }
-      const text = document.getText();
-      const pos0 = document.positionAt(0);
-      const pos1 = document.positionAt(text.length);
-      return [TextEdit.replace(Range.create(pos0, pos1), text.toUpperCase())];
+      if (!this.prettierEditService) {
+        throw new Error("");
+      }
+      const edits = await this.prettierEditService.provideEdits(document, {
+        force: false,
+      });
+      return edits;
     });
 
     this.connection.onDocumentRangeFormatting(async (params) => {
@@ -137,8 +158,15 @@ export class ConnectionService {
       if (document === undefined) {
         return [];
       }
-      const text = document.getText(params.range);
-      return [TextEdit.replace(params.range, text.toUpperCase())];
+      if (!this.prettierEditService) {
+        throw new Error("");
+      }
+      const edits = await this.prettierEditService.provideEdits(document, {
+        rangeStart: params.range.start.character,
+        rangeEnd: params.range.end.character,
+        force: false,
+      });
+      return edits;
     });
   }
 }
