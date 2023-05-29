@@ -8,6 +8,7 @@ import {
 } from "./types";
 import { ConnectionService } from "./ConnectionService";
 import { URI } from "vscode-uri";
+import { getParserFromLanguageId } from "./languageFilter";
 
 export class PrettierEditService {
   constructor(

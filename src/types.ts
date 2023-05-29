@@ -114,4 +114,5 @@ export {
   ExecuteNpmPackageManagerCommand,
   PrettierFileInfoResult,
   PrettierBuiltInParserName,
+  PrettierSupportLanguage,
 };
