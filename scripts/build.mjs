@@ -1,4 +1,4 @@
-import { build } from "esbuild";
+import { build, context } from "esbuild";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -28,15 +28,22 @@ const options = {
 };
 
 if (process.env.WATCH === "true") {
-  options.watch = {
-    onRebuild(error, result) {
-      if (error) {
-        console.error("watch build failed:", error);
-      } else {
-        console.log("watch build succeeded:", result);
-      }
-    },
-  };
+  context({
+    plugins: [
+      {
+        name: "on-end",
+        setup(build) {
+          build.onEnd((error, result) => {
+            if (error) {
+              console.error("watch build failed:", error);
+            } else {
+              console.log("watch build succeeded:", result);
+            }
+          });
+        },
+      },
+    ],
+  });
 }
 
 build(options).catch((err) => {

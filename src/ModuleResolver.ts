@@ -28,7 +28,7 @@ import {
   getWorkspaceRelativePath,
   getWorkspaceFolder,
 } from "./workspace-utils";
-import { ConnectionService } from "./ConnectionService";
+import { WorkspaceService } from "./WorkspaceService";
 
 const minPrettierVersion = "1.13.0";
 declare const __webpack_require__: typeof require;
@@ -79,9 +79,7 @@ export class ModuleResolver implements ModuleResolverInterface {
   constructor(
     private loggingService: LoggingService,
     private workspaceFolders: WorkspaceFolder[] | null | undefined,
-    private getIsTrusted: () => boolean,
-    private executeNpmPackageManagerCommand: ConnectionService["executeNpmPackageManagerCommand"],
-    private getConfig: ConnectionService["getConfig"]
+    private workspaceService: WorkspaceService
   ) {
     this.findPkgCache = new Map();
   }
@@ -97,14 +95,13 @@ export class ModuleResolver implements ModuleResolverInterface {
   public async getPrettierInstance(
     fileName: string
   ): Promise<PrettierNodeModule | undefined> {
-    if (!this.getIsTrusted()) {
+    if (!this.workspaceService.isTrusted()) {
       this.loggingService.logDebug(UNTRUSTED_WORKSPACE_USING_BUNDLED_PRETTIER);
       return prettier;
     }
 
-    const { prettierPath, resolveGlobalModules } = await this.getConfig(
-      URI.file(fileName)
-    );
+    const { prettierPath, resolveGlobalModules } =
+      await this.workspaceService.getConfig(URI.file(fileName));
 
     // Look for local module
     let modulePath: string | undefined = undefined;
@@ -148,9 +145,10 @@ export class ModuleResolver implements ModuleResolverInterface {
         const folder = getWorkspaceFolder(this.workspaceFolders, fileName);
         if (folder) workspaceFolder = folder.uri;
       }
-      const packageManager = await this.executeNpmPackageManagerCommand(
-        workspaceFolder
-      );
+      const packageManager =
+        await this.workspaceService.executeNpmPackageManagerCommand(
+          workspaceFolder
+        );
       const resolvedGlobalPackageManagerPath =
         packageManager && globalPathGet(packageManager);
       if (resolvedGlobalPackageManagerPath) {

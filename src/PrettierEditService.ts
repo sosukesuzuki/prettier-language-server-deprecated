@@ -8,15 +8,15 @@ import {
   PrettierOptions,
   RangeFormattingOptions,
 } from "./types";
-import { ConnectionService } from "./ConnectionService";
 import { URI } from "vscode-uri";
 import { getParserFromLanguageId } from "./languageFilter";
 import { Range, TextEdit } from "vscode-languageserver";
+import { WorkspaceService } from "./WorkspaceService";
 
 export class PrettierEditService {
   constructor(
-    private getConfig: ConnectionService["getConfig"],
     private loggingService: LoggingService,
+    private workspaceService: WorkspaceService,
     private moduleResolver: ModuleResolverInterface
   ) {}
 
@@ -72,7 +72,9 @@ export class PrettierEditService {
 
     this.loggingService.logInfo(`Formatting ${uri}`);
 
-    const vscodeConfig = await this.getConfig(uri);
+    const vscodeConfig = await this.workspaceService.getConfig(uri);
+
+    this.loggingService.logDebug("vscodeConfig ", vscodeConfig);
 
     const resolvedConfig = await this.moduleResolver.getResolvedConfig(
       document,
@@ -87,6 +89,8 @@ export class PrettierEditService {
     const prettierInstance = await this.moduleResolver.getPrettierInstance(
       uri.fsPath
     );
+
+    this.loggingService.logInfo("prettierInstance ", prettierInstance);
 
     if (!prettierInstance) {
       this.loggingService.logError(
