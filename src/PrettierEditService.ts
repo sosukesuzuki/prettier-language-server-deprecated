@@ -90,8 +90,6 @@ export class PrettierEditService {
       uri.fsPath
     );
 
-    this.loggingService.logInfo("prettierInstance ", prettierInstance);
-
     if (!prettierInstance) {
       this.loggingService.logError(
         "Prettier could not be loaded. See previous logs for more information."
