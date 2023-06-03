@@ -119,6 +119,8 @@ export class ConnectionService {
           documentRangeFormattingProvider: true,
         },
       };
+
+      this.loggingService.logInfo("onInitialize");
       return result;
     });
 
@@ -130,6 +132,8 @@ export class ConnectionService {
           undefined
         );
       }
+
+      this.loggingService.logInfo("OnInitialized");
     });
 
     this.connection.onNotification(
