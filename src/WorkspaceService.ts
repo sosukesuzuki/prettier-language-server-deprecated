@@ -27,10 +27,6 @@ export class WorkspaceService {
   }
 
   public getConfig(uri: URI): Promise<PrettierVSCodeConfig> {
-    this.loggingService.logDebug(
-      "Start to get configureation",
-      typeof document2Setting
-    );
     let resultPromise = document2Setting.get(uri.fsPath);
     if (resultPromise) {
       return resultPromise;
